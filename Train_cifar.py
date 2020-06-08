@@ -164,7 +164,7 @@ def test(epoch,net1,net2):
 
 def eval_train(model,all_loss):    
     model.eval()
-    #losses = torch.zeros(50000)    
+    losses = torch.zeros(50000)    
     predicted_prob=torch.zeros([len(eval_loader.dataset),args.num_class])
     with torch.no_grad():
         for batch_idx, (inputs, targets, index) in enumerate(eval_loader):
@@ -173,9 +173,9 @@ def eval_train(model,all_loss):
             loss = CE(outputs, targets) 
             outputs=torch.softmax(outputs,dim=1) 
             for b in range(inputs.size(0)):
-                #losses[index[b]]=loss[b]
+                losses[index[b]]=loss[b]
                 predicted_prob[index[b]]= outputs[b]        
-    #losses = (losses-losses.min())/(losses.max()-losses.min())    
+    losses = (losses-losses.min())/(losses.max()-losses.min())    
     all_loss.append(losses)
     gmm = GaussianMixture(n_components=2,max_iter=10,reg_covar=5e-4,tol=1e-2)
     gmm.fit(predicted_prob)
