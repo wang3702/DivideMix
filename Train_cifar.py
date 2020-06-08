@@ -180,8 +180,16 @@ def eval_train(model,all_loss):
     gmm = GaussianMixture(n_components=2,max_iter=10,reg_covar=5e-4,tol=1e-2)
     gmm.fit(predicted_prob)
     prob = gmm.predict_proba(predicted_prob) 
-    prob = prob[:,gmm.means_.argmin()]#we think clean part is always less compared to that of wrong part
-    
+    #prob = prob[:,gmm.means_.argmin()]#we think clean part is always less compared to that of wrong part
+    print(prob.shape)
+    prob1 = prob[:,0]#we think clean part is always less compared to that of wrong part
+    prob2=prob[:,1]
+    sum_prob1=np.sum(prob1)
+    sum_prob2=np.sum(prob2)
+    if sum_prob1<sum_prob2:
+        prob=prob1
+    else:
+        prob=prob2
     # if args.r==0.9: # average loss over last 5 epochs to improve convergence stability
     #     history = torch.stack(all_loss)
     #     input_loss = history[-5:].mean(0)
