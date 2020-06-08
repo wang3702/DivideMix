@@ -25,12 +25,13 @@ parser.add_argument('--num_epochs', default=80, type=int)
 parser.add_argument('--id', default='clothing1m')
 parser.add_argument('--data_path', default='../../Clothing1M/data', type=str, help='path to dataset')
 parser.add_argument('--seed', default=123)
-parser.add_argument('--gpuid', default=0, type=int)
+parser.add_argument('--gpu', default='0', type=str)
 parser.add_argument('--num_class', default=14, type=int)
 parser.add_argument('--num_batches', default=1000, type=int)
 args = parser.parse_args()
 
-torch.cuda.set_device(args.gpuid)
+#torch.cuda.set_device(args.gpuid)
+os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 random.seed(args.seed)
 torch.manual_seed(args.seed)
 torch.cuda.manual_seed_all(args.seed)
@@ -212,6 +213,7 @@ def create_model():
     model = models.resnet50(pretrained=True)
     model.fc = nn.Linear(2048,args.num_class)
     model = model.cuda()
+    model= nn.DataParallel(model, device_ids=None)
     return model     
 
 log=open('./checkpoint/%s.txt'%args.id,'w')     
