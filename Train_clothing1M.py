@@ -200,7 +200,7 @@ def eval_train(epoch,model):
             sys.stdout.flush()
     gmm = GaussianMixture(n_components=2,max_iter=10,reg_covar=5e-4,tol=1e-2)
     gmm.fit(predicted_prob)
-    prob = gmm.predict_proba(losses) 
+    prob = gmm.predict_proba(predicted_prob) 
     prob = prob[:,gmm.means_.argmin()]#we think clean part is always less compared to that of wrong part
     #losses = (losses-losses.min())/(losses.max()-losses.min())    
     #losses = losses.reshape(-1,1)

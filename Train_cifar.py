@@ -179,7 +179,7 @@ def eval_train(model,all_loss):
     all_loss.append(losses)
     gmm = GaussianMixture(n_components=2,max_iter=10,reg_covar=5e-4,tol=1e-2)
     gmm.fit(predicted_prob)
-    prob = gmm.predict_proba(losses) 
+    prob = gmm.predict_proba(predicted_prob) 
     prob = prob[:,gmm.means_.argmin()]#we think clean part is always less compared to that of wrong part
     
     # if args.r==0.9: # average loss over last 5 epochs to improve convergence stability
