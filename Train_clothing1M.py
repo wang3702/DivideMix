@@ -180,7 +180,8 @@ def test(net1,net2,test_loader):
 def eval_train(epoch,model):
     model.eval()
     num_samples = args.num_batches*args.batch_size
-    losses = torch.zeros(num_samples)
+    #losses = torch.zeros(num_samples)
+    predicted_prob=torch.zeros([num_samples,args.num_class])
     paths = []
     n=0
     with torch.no_grad():
@@ -188,20 +189,25 @@ def eval_train(epoch,model):
             inputs, targets = inputs.cuda(), targets.cuda() 
             outputs = model(inputs) 
             loss = CE(outputs, targets)  
+            outputs=torch.softmax(outputs,dim=1)
             for b in range(inputs.size(0)):
-                losses[n]=loss[b] 
+                #losses[n]=loss[b] 
+                predicted_prob[n]=outputs[b]
                 paths.append(path[b])
                 n+=1
             sys.stdout.write('\r')
             sys.stdout.write('| Evaluating loss Iter %3d\t' %(batch_idx)) 
             sys.stdout.flush()
-            
-    losses = (losses-losses.min())/(losses.max()-losses.min())    
-    losses = losses.reshape(-1,1)
     gmm = GaussianMixture(n_components=2,max_iter=10,reg_covar=5e-4,tol=1e-2)
-    gmm.fit(losses)
+    gmm.fit(predicted_prob)
     prob = gmm.predict_proba(losses) 
-    prob = prob[:,gmm.means_.argmin()]       
+    prob = prob[:,gmm.means_.argmin()]#we think clean part is always less compared to that of wrong part
+    #losses = (losses-losses.min())/(losses.max()-losses.min())    
+    #losses = losses.reshape(-1,1)
+    #gmm = GaussianMixture(n_components=2,max_iter=10,reg_covar=5e-4,tol=1e-2)
+    #gmm.fit(losses)
+    #prob = gmm.predict_proba(losses) 
+    #prob = prob[:,gmm.means_.argmin()]       
     return prob,paths  
     
 class NegEntropy(object):
