@@ -164,29 +164,36 @@ def test(epoch,net1,net2):
 
 def eval_train(model,all_loss):    
     model.eval()
-    losses = torch.zeros(50000)    
+    #losses = torch.zeros(50000)    
+    predicted_prob=torch.zeros([num_samples,args.num_class])
     with torch.no_grad():
         for batch_idx, (inputs, targets, index) in enumerate(eval_loader):
             inputs, targets = inputs.cuda(), targets.cuda() 
             outputs = model(inputs) 
-            loss = CE(outputs, targets)  
+            loss = CE(outputs, targets) 
+            outputs=torch.softmax(outputs,dim=1) 
             for b in range(inputs.size(0)):
-                losses[index[b]]=loss[b]         
-    losses = (losses-losses.min())/(losses.max()-losses.min())    
+                #losses[index[b]]=loss[b]
+                predicted_prob[index[b]]= outputs[b]        
+    #losses = (losses-losses.min())/(losses.max()-losses.min())    
     all_loss.append(losses)
-
-    if args.r==0.9: # average loss over last 5 epochs to improve convergence stability
-        history = torch.stack(all_loss)
-        input_loss = history[-5:].mean(0)
-        input_loss = input_loss.reshape(-1,1)
-    else:
-        input_loss = losses.reshape(-1,1)
+    gmm = GaussianMixture(n_components=2,max_iter=10,reg_covar=5e-4,tol=1e-2)
+    gmm.fit(predicted_prob)
+    prob = gmm.predict_proba(losses) 
+    prob = prob[:,gmm.means_.argmin()]#we think clean part is always less compared to that of wrong part
+    
+    # if args.r==0.9: # average loss over last 5 epochs to improve convergence stability
+    #     history = torch.stack(all_loss)
+    #     input_loss = history[-5:].mean(0)
+    #     input_loss = input_loss.reshape(-1,1)
+    # else:
+    #     input_loss = losses.reshape(-1,1)
     
     # fit a two-component GMM to the loss
-    gmm = GaussianMixture(n_components=2,max_iter=10,tol=1e-2,reg_covar=5e-4)
-    gmm.fit(input_loss)
-    prob = gmm.predict_proba(input_loss) 
-    prob = prob[:,gmm.means_.argmin()]         
+    #gmm = GaussianMixture(n_components=2,max_iter=10,tol=1e-2,reg_covar=5e-4)
+    #gmm.fit(input_loss)
+    #prob = gmm.predict_proba(input_loss) 
+    #prob = prob[:,gmm.means_.argmin()]         
     return prob,all_loss
 
 def linear_rampup(current, warm_up, rampup_length=16):
